@@ -12,6 +12,53 @@ namespace My2D
         [SerializeField] private float moveSpeed = 4f;
         private float startSpeed;
 
+        public float CurrentSpeed
+        {
+            get
+            {
+                if(CanMove)
+                {
+                    if (IsMove && touchingDirection.IsWall == false)
+                    {
+                        if (touchingDirection.IsGround)
+                        {
+                            if (IsRun)
+                            {
+                                return runSpeed;
+                            }
+                            else
+                            {
+                                return moveSpeed;
+                            }
+
+                        }
+                        else
+                        {
+                            return airSpeed;
+                        }
+                    }
+                    else
+                    {
+                        return 0f; // Idle state, 움직이지 못할 때
+                    }
+                }
+                else
+                {
+                    return 0f;
+                }
+
+            }
+
+        }
+
+        public bool CanMove
+        {
+            get
+            {
+                return animator.GetBool(AnimationString.CanMove);
+            }
+        }
+
         private bool isMove = false;
         public bool IsMove 
         { 
@@ -29,6 +76,10 @@ namespace My2D
         // 뛰기
         [SerializeField] private float runSpeed = 10f;
         [SerializeField] private bool isRun = false;
+
+        [SerializeField] private float jumpPower = 8f;
+        [SerializeField] private float airSpeed = 2f;
+
         public bool IsRun
         {
             get
@@ -63,6 +114,7 @@ namespace My2D
             }
         }
 
+        TouchingDirection touchingDirection;
         Animator animator;
         Rigidbody2D rb;
 
@@ -85,23 +137,31 @@ namespace My2D
         private void FixedUpdate()
         {
             PlayerMove();
+
+
+            animator.SetFloat(AnimationString.YVelocity, rb.velocity.y);
         }
 
         void Init()
         {
             rb = GetComponent<Rigidbody2D>();
             animator = GetComponent<Animator>();
-            startSpeed = moveSpeed;
+            touchingDirection = GetComponent<TouchingDirection>();
+            //startSpeed = moveSpeed;
         }
 
         void PlayerMove()
         {
-            rb.velocity = new Vector2(movePos.x * moveSpeed, rb.velocity.y);
+            rb.velocity = new Vector2(movePos.x * CurrentSpeed, rb.velocity.y);
             //rb.velocity = new Vector2(movePos.x * moveSpeed, movePos.y * moveSpeed);
 
             MoveAnimation();
 
-            PlayerRot(movePos);
+            if(CanMove)
+            {
+                PlayerRot(movePos);
+            }
+
 
             //if (movePos.x > 0f)
             //{
@@ -155,21 +215,47 @@ namespace My2D
         {
             if(context.started == true)
             {
-                moveSpeed = runSpeed;
+                //moveSpeed = runSpeed;
                 IsRun = true;
             }
             else if(context.canceled == true) // KeyUp
             {
-                moveSpeed = startSpeed;
+                //moveSpeed = startSpeed;
                 IsRun = false;
             }
 
         }
         public void Jump(InputAction.CallbackContext context)
         {
+            if (context.started == true)
+            {
+                if (touchingDirection.IsGround == true)
+                {
+                    PlayerJump();
+                }
 
+            }
 
         }
+
+        public void Attack(InputAction.CallbackContext context)
+        {
+            if (context.started == true)
+            {
+                if (touchingDirection.IsGround == true)
+                {
+                    animator.SetTrigger(AnimationString.AttackTrigger);
+                }
+            }
+        }
+
+        void PlayerJump()
+        {
+            animator.SetTrigger(AnimationString.JumpTrigger);
+            rb.velocity = new Vector2(rb.velocity.x, jumpPower);
+        }
+
+
 
     }
 
