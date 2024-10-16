@@ -114,6 +114,15 @@ namespace My2D
             }
         }
 
+        public bool IsDeath
+        {
+            get
+            {
+                return animator.GetBool(AnimationString.IsDeath);
+            }
+        }
+
+
         TouchingDirection touchingDirection;
         Animator animator;
         Rigidbody2D rb;
