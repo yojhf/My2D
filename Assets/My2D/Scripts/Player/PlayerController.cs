@@ -12,6 +12,8 @@ namespace My2D
         [SerializeField] private float moveSpeed = 4f;
         private float startSpeed;
 
+        DamageAble damageAble;
+
         public float CurrentSpeed
         {
             get
@@ -145,7 +147,11 @@ namespace My2D
 
         private void FixedUpdate()
         {
-            PlayerMove();
+            if(damageAble.LockVelocity == false)
+            {
+                PlayerMove();
+            }
+
 
 
             animator.SetFloat(AnimationString.YVelocity, rb.velocity.y);
@@ -156,6 +162,8 @@ namespace My2D
             rb = GetComponent<Rigidbody2D>();
             animator = GetComponent<Animator>();
             touchingDirection = GetComponent<TouchingDirection>();
+            damageAble = GetComponent<DamageAble>();
+            damageAble.hitAction += Hit; // UnityAction 델리게이트 함수에 등록
             //startSpeed = moveSpeed;
         }
 
@@ -258,13 +266,27 @@ namespace My2D
             }
         }
 
+        public void BowAttack(InputAction.CallbackContext context)
+        {
+            if (context.started == true)
+            {
+                if (touchingDirection.IsGround == true)
+                {
+                    animator.SetTrigger(AnimationString.BowTrigger);
+                }
+            }
+        }
+
         void PlayerJump()
         {
             animator.SetTrigger(AnimationString.JumpTrigger);
             rb.velocity = new Vector2(rb.velocity.x, jumpPower);
         }
 
-
+        public void Hit(Vector2 knockback)
+        {
+            rb.velocity = new Vector2(knockback.x, rb.velocity.y + knockback.y);
+        }
 
     }
 

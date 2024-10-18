@@ -1,11 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace My2D
 {
     public class DamageAble : MonoBehaviour
     {
+        // 데미지를 입을 때 등록된 함수 호출
+        public UnityAction<Vector2> hitAction;
+
+
         [SerializeField] private float maxHealth = 100f;
 
         public float MaxHealth
@@ -55,6 +60,18 @@ namespace My2D
             }
         }
 
+        public bool LockVelocity
+        {
+            get
+            {
+                return animator.GetBool(AnimationString.LockVelocity);
+            }
+            private set
+            {
+                animator.SetBool(AnimationString.LockVelocity, value);
+            }
+        }
+
         private bool isInvincible = false;
         [SerializeField] private float invincibleTimer = 3f;
         private float count = 0f;
@@ -79,16 +96,27 @@ namespace My2D
             CurrentHealth = MaxHealth;
         }
 
-        public void TakeDamage(float damage)
+        public void TakeDamage(float damage, Vector2 knockback)
         {
             if (!IsDeath && !isInvincible)
             {
                 isInvincible = true;
+                LockVelocity = true;
+
+                CharacterEvent.characterDamaged?.Invoke(gameObject, damage);
 
                 CurrentHealth -= damage;
                 animator.SetTrigger(AnimationString.HitTrigger);
 
                 Debug.Log(CurrentHealth);
+
+                // 데미지 효과
+                if(hitAction != null)
+                {
+                    hitAction.Invoke(knockback);
+                }
+
+
             }
         }
         
@@ -105,6 +133,34 @@ namespace My2D
                 }
             }
 
+        }
+
+        public bool HealHp(float hp)
+        {
+            if(CurrentHealth >= maxHealth)
+            {
+                return false;
+            }
+            
+            float chargeHp = CurrentHealth += hp;
+
+            if(chargeHp > maxHealth)
+            {
+                hp = CurrentHealth - maxHealth;
+
+                CurrentHealth = maxHealth;         
+            }
+            else
+            {
+                CurrentHealth = chargeHp;
+            }
+
+
+            CharacterEvent.characterHealed?.Invoke(gameObject, hp);
+
+            Debug.Log(CurrentHealth);
+
+            return true;
         }
 
     }

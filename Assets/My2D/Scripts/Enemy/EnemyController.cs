@@ -65,9 +65,12 @@ namespace My2D
         private float stopRate = 0.2f;
 
         DetectionZone detectionZone;
+        // ³¶¶³¾îÁö °¨Áö
+        DetectionZone detectionCliff;
         TouchingDirection touchingDirection;
         Rigidbody2D e_rb;
         Animator e_animator;
+        DamageAble damageAble;
 
         private void Awake()
         {
@@ -87,7 +90,10 @@ namespace My2D
 
         private void FixedUpdate()
         {
-            EnemyMove();
+            if (damageAble.LockVelocity == false)
+            {
+                EnemyMove();
+            }
         }
 
         void Init()
@@ -96,17 +102,22 @@ namespace My2D
             e_rb = GetComponent<Rigidbody2D>();
             touchingDirection = GetComponent<TouchingDirection>();
             detectionZone = transform.GetChild(0).GetComponent<DetectionZone>();
+            detectionCliff = transform.GetChild(1).GetComponent<DetectionZone>();
+            damageAble = GetComponent<DamageAble>();
+
+            damageAble.hitAction += Hit;
+            detectionCliff.noColRemain += Cliff;
         }
 
         void EnemyMove()
         {
-            if(touchingDirection.IsWall == true && touchingDirection.IsGround == true)
+            if (touchingDirection.IsWall == true && touchingDirection.IsGround == true)
             {
                 Flip();
             }
 
 
-            if(E_CanMove)
+            if (E_CanMove)
             {
                 e_rb.velocity = new Vector2(e_direction.x * e_runSpeed, e_direction.y);
             }
@@ -122,7 +133,7 @@ namespace My2D
             HasTarget = (detectionZone.detectedColliders.Count > 0);
         }
 
-        void Flip()
+        public void Flip()
         {
             Vector3 rotation = transform.eulerAngles;
 
@@ -141,6 +152,19 @@ namespace My2D
             }
 
             transform.eulerAngles = rotation;
+        }
+
+        public void Hit(Vector2 knockback)
+        {
+            e_rb.velocity = new Vector2(knockback.x, e_rb.velocity.y + knockback.y);
+        }
+        public void Cliff()
+        {
+            if(touchingDirection.IsGround)
+            {
+                Flip();
+            }
+
         }
     }
 }
