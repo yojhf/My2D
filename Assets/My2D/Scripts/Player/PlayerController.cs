@@ -128,6 +128,7 @@ namespace My2D
         TouchingDirection touchingDirection;
         Animator animator;
         Rigidbody2D rb;
+        TrailEffect trailEffect;
 
         private void Awake()
         {
@@ -163,6 +164,7 @@ namespace My2D
             animator = GetComponent<Animator>();
             touchingDirection = GetComponent<TouchingDirection>();
             damageAble = GetComponent<DamageAble>();
+            trailEffect = GetComponent<TrailEffect>();
             damageAble.hitAction += Hit; // UnityAction 델리게이트 함수에 등록
             //startSpeed = moveSpeed;
         }
@@ -179,6 +181,11 @@ namespace My2D
                 PlayerRot(movePos);
             }
 
+
+            if (trailEffect != null)
+            {
+                trailEffect.StartActiveTrail();
+            }
 
             //if (movePos.x > 0f)
             //{
@@ -280,7 +287,13 @@ namespace My2D
         void PlayerJump()
         {
             animator.SetTrigger(AnimationString.JumpTrigger);
+
             rb.velocity = new Vector2(rb.velocity.x, jumpPower);
+
+            if(trailEffect != null)
+            {
+                trailEffect.StartActiveTrail(); 
+            }
         }
 
         public void Hit(Vector2 knockback)
